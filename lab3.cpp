@@ -11,10 +11,10 @@
 HANDLE tHandles[NUMBER_OF_THREADS];
 HANDLE write_lock; // mutex
 SRWLOCK phase_lock; // mutex based lock for usage with windows condition variables
-CONDITION_VARIABLE phase_cond, phase_symbol_counter_cond; // cond variable
+CONDITION_VARIABLE phase_cond, thread_finished_cond; // cond variable
 
 HANDLE semH, semI, semK; // semaphores
-int phase, phase_symbol_counter;
+int phase, finished_threads_count;
 
 unsigned int lab3_thread_graph_id() {
     return 6;
@@ -45,8 +45,8 @@ void load_async(const char *s) {
     }
     // notify main thread about finished work
     AcquireSRWLockExclusive(&phase_lock);
-    phase_symbol_counter += WRITE_COUNT;
-    WakeAllConditionVariable(&phase_symbol_counter_cond);
+    finished_threads_count ++;
+    WakeAllConditionVariable(&thread_finished_cond);
     ReleaseSRWLockExclusive(&phase_lock);
 }
 
@@ -61,8 +61,8 @@ void load_sync(const char *s, HANDLE &cur, HANDLE &next) {
     }
     // notify main thread about finished work
     AcquireSRWLockExclusive(&phase_lock);
-    phase_symbol_counter += WRITE_COUNT;
-    WakeAllConditionVariable(&phase_symbol_counter_cond);
+    finished_threads_count++;
+    WakeAllConditionVariable(&thread_finished_cond);
     ReleaseSRWLockExclusive(&phase_lock);
 }
 
@@ -78,21 +78,20 @@ void wait_phase(int phase_num) {
 void change_phase(int phase_num) {
     // before changing phases, wait for other threads to finish
     AcquireSRWLockExclusive(&phase_lock);
-    // number of symbols based on amount of parallel threads in each phase
-    int symbols;
-    if (phase == 1) symbols = WRITE_COUNT * 1;
-    else if (phase >= 2 && phase <= 5) symbols = WRITE_COUNT * 3;
-    else if (phase == 6) symbols = WRITE_COUNT * 2;
+    int finished_threads;
+    if (phase == 1) finished_threads = 1;
+    else if (phase >= 2 && phase <= 5) finished_threads = 3;
+    else if (phase == 6) finished_threads = 2;
     else exit(2); // invalid phase
 
-    while (phase_symbol_counter != symbols) {
+    while (finished_threads_count != finished_threads) {
         // wait for other threads to finish
         // wakes up to check condition every time other thread finished printing
-        SleepConditionVariableSRW(&phase_symbol_counter_cond, &phase_lock, 100, 0);
+        SleepConditionVariableSRW(&thread_finished_cond, &phase_lock, INFINITE, 0);
     }
 
     phase = phase_num;
-    phase_symbol_counter = 0;
+    finished_threads_count = 0;
     // wake up all threads that are waiting for next phase
     WakeAllConditionVariable(&phase_cond);
     ReleaseSRWLockExclusive(&phase_lock);
@@ -218,7 +217,7 @@ int lab3_init() {
 
     // init cond var
     InitializeConditionVariable(&phase_cond);
-    InitializeConditionVariable(&phase_symbol_counter_cond);
+    InitializeConditionVariable(&thread_finished_cond);
 
     // initialize semaphores
     semH = CreateSemaphore(NULL, 1, 1, NULL);
@@ -231,7 +230,7 @@ int lab3_init() {
     }
 
     phase = 1;
-    phase_symbol_counter = 0;
+    finished_threads_count = 0;
 
     spawn_thread(0, thread_a);
 
