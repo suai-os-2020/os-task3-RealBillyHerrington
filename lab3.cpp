@@ -1,5 +1,6 @@
-#define _WIN32_WINNT 0x0A00
+#define _WIN32_WINNT 0x0600
 
+#include <sdkddkver.h>
 #include "lab3.h"
 #include <windows.h>
 #include <stdlib.h>
@@ -237,7 +238,6 @@ int lab3_init() {
     WaitForSingleObject(tHandles[0], INFINITE);
 
     CloseHandle(write_lock);
-    CloseHandle(phase_lock);
 
     CloseHandle(semH);
     CloseHandle(semI);
