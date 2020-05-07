@@ -3,7 +3,6 @@
 #include <sdkddkver.h>
 #include "lab3.h"
 #include <windows.h>
-#include <synchapi.h>
 #include <stdlib.h>
 #include <stdio.h>
 
