@@ -6,6 +6,27 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+typedef PVOID SRWLOCK, *PSRWLOCK;
+void WINAPI InitializeSRWLock (PSRWLOCK);
+void WINAPI AcquireSRWLockExclusive (PSRWLOCK);
+void WINAPI AcquireSRWLockShared (PSRWLOCK);
+#if _WIN32_WINNT >= _WIN32_WINNT_WIN7
+BOOLEAN WINAPI TryAcquireSRWLockExclusive (PSRWLOCK);
+BOOLEAN WINAPI TryAcquireSRWLockShared (PSRWLOCK);
+#endif
+void WINAPI ReleaseSRWLockExclusive (PSRWLOCK);
+void WINAPI ReleaseSRWLockShared (PSRWLOCK);
+
+typedef PVOID CONDITION_VARIABLE, *PCONDITION_VARIABLE;
+void WINAPI InitializeConditionVariable (PCONDITION_VARIABLE);
+BOOL WINAPI SleepConditionVariableCS (PCONDITION_VARIABLE, PCRITICAL_SECTION, DWORD);
+BOOL WINAPI SleepConditionVariableSRW (PCONDITION_VARIABLE, PSRWLOCK, DWORD, ULONG);
+void WINAPI WakeAllConditionVariable (PCONDITION_VARIABLE);
+void WINAPI WakeConditionVariable (PCONDITION_VARIABLE);
+#endif
+
+
 #define NUMBER_OF_THREADS 11
 #define WRITE_COUNT 3
 
