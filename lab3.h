@@ -5,8 +5,6 @@
 #ifndef LAB3_LAB3_H
 #define LAB3_LAB3_H
 
-#define _WIN32_WINNT 0x0601
-
 // global includes
 #include <iostream>
 
